@@ -8,6 +8,7 @@ proxy_url = 'http://192.168.2.14:6000/'
 
 app = Flask(__name__)
 
+
 @app.route('/', methods=['GET', 'POST'])
 def cloud():
     if request.method == 'GET':
@@ -121,6 +122,38 @@ def cloud_abort(JID):
         data = BytesIO()
     return
 
+@app.route('/cloud/pods')
+def cloud_pod_ls():
+    if request.method == 'GET':
+        print("Cloud is listing its pods")
+        data=BytesIO()
+    return
+
+@app.route('/cloud/pods')
+def cloud_node_ls(res_pod_ID):
+    if request.method == 'GET':
+        print('Cloud is listing nodes')
+        data=BytesIO()
+    return
+
+@app.route('/cloud/jobs')
+def cloud_job_ls(node_ID):
+    if request.method=='GET':
+        print('Cloud is listing jobs')
+        data=ByteIO()
+    return
+@app.route('/cloud/jobs')
+def cloud_job_log(job_ID):
+    if request.method=='GET':
+        print('Cloud is listing log files of the job')
+        data=ByteIO()
+    return
+@app.route('/cloud/nodes')
+def cloud_log_node(node_ID):
+    if request.method=='GET':
+        print('Cloud is listing the log file of the node')
+        data=ByteIO()
+    return
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

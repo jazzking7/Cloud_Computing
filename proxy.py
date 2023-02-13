@@ -29,7 +29,7 @@ def cloud_register(name, pod_name):
                 result = 'node_added'
                 pods['default'].append({'name': name, 'status': 'Idle'})
                 # job launch
-                nodes.append({'name': name, 'status': 'Idle', 'log_file': {}})
+                nodes.append({'name': name, 'status': 'Idle', 'log_file': []})
                 node_status = 'Idle'
                 print('Successfully added a new node: ' + str(name))
             return jsonify({'result': result, 'node_status': node_status, 'node_name': name, 'pod_name': 'default'})
@@ -43,7 +43,7 @@ def cloud_register(name, pod_name):
                 result = 'node_added'
                 pods[str(pod_name)].append({'name': name, 'status': 'Idle'})
                 # job launch
-                nodes.append({'name': name, 'status': 'Idle', 'log_file': {}})
+                nodes.append({'name': name, 'status': 'Idle', 'log_file': []})
                 node_status = 'Idle'
                 print('Successfully added a new node: ' + str(name))
 
@@ -64,7 +64,7 @@ def cloud_init():
         for i in range(40):
             default_nodes.append({'name': ('default' + str(i)), 'status': 'Idle'})
             # job launch
-            nodes.append({'name': ('default' + str(i)), 'status': 'Idle', 'log_file': {}})
+            nodes.append({'name': ('default' + str(i)), 'status': 'Idle', 'log_file': []})
         pods['default'] = default_nodes
         result = 'initialized'
         ## under condition only one pod
@@ -122,7 +122,7 @@ def cloud_rm(name):
         return jsonify({'result': result})
 
 # Launch Jobs
-@app.route('/cloudproxy/jobs/launch/')
+@app.route('/cloudproxy/jobs/launch')
 def cloud_launch(file_path):
     if request.method == 'POST':
         print('request to post a job: ' + str(file_path))
@@ -130,7 +130,6 @@ def cloud_launch(file_path):
         now = datetime.now()
         d1 = now.strftime("%d/%m/%Y>%H:%M:%S")
         JID = file_path + d1
-        # Q1 Job structure
         new_job = {"JID": JID, "status": "Registered",
                    "node": None, "process": None}
         launched = False
@@ -142,16 +141,14 @@ def cloud_launch(file_path):
                 new_job['status'] = 'Running'
                 new_job['node'] = node
                 node['status'] = 'Running'
+                node['log_file'].append(f"Started Executing {JID}")
                 print(JID)
-                # Q2 How to run
+                # Run the job
                 process = subprocess.Popen(['sh', file_path], stdout=subprocess.PIPE)
                 new_job['process'] = process
                 new_job['status'] = 'Completed'
                 node['status'] = 'Idle'
-                # Q3 How to direct output
-                node['log_file'][JID] = None
-                # Q4 How to connect to proxy
-                # Q5 How to clear the queue
+                node['log_file'].append(f"Finished Executing {JID}")
         result = "Launched" if launched else "Failure"
         return jsonify({'result': result})
 
@@ -166,9 +163,73 @@ def cloud_abort(JID):
                 job['process'].kill()
                 job['status'] = 'Aborted'
                 job['node']['status'] = 'Idle'
-                job['node'] = None
                 return jsonify({'result': 'Success'})
     return jsonify({'result': 'Failure'})
+
+@app.route('/cloudproxy/pods')
+def could_pod_ls():
+    for pod in pods:
+        i = 0
+        for node in pod:
+            i =+ 1
+        print(str(pod['name'])+":"+str(i)+"nodes")
+    return jsonify({'result':'success'})
+
+@app.route('/cloudproxy/pods')
+def cloud_node_ls(res_pod_ID):
+    result="unknown"
+    if len(res_pod_ID)==0:
+        for pod in pods:
+            for node in pod:
+                print(str(node['name']) + str(node['status']))
+                result="success"
+    elif str(res_pod_ID) not in pods:
+        result="not such pod"
+    else:
+        for node in pods(str(res_pod_ID)):
+            print(str(node['name'])+str(node['status']))
+            result="success"
+    return jsonify({'result':result})
+                   
+@app.route('/cloudproxy/jobs')
+def cloud_job_ls(node_ID):
+    if len(node_ID)==0:
+        for job in jobs:
+            print(str(job['name']+job['status']))
+            return jsonify({'success'})
+    else:
+        i=0
+        for job in jobs:
+            if job['node']==str(node_ID):
+                i=+1
+                print(str(job['name'])+str(node_ID)+str(job['status']))
+        if i==0:
+            return jsonify({"result":"no such node"})
+        else:
+            return jsonify("success")
+    
+@app.route('/cloudproxy/jobs')
+def cloud_job_log(job_ID):
+    if len(job_ID)==0:
+        return jsonify('command fails')
+    else:
+        for job in jobs:
+            if job['JID']==str(job_ID):
+                print("Started executing {JID}")
+                print("Finished executing {JID}")
+                return jsonify({"result":"success"})
+        return jsonify({"command fails"})
+        
+@app.route('/cloudproxy/nodes')
+def cloud_log_node(node_ID):
+    if len(mode_ID)==0:
+        return jsonify("command fails")
+    else:
+        for node in nodes:
+            if node['name']==str(node_ID):
+                print(name['log_file'])
+                return jsonify("success")
+        return jsonify("command fails")
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=6000)

@@ -58,7 +58,39 @@ def cloud_abort(url, command):
         JID = command_list[2]
         cURL.setopt(cURL.URL, url + '/cloud/jobs/abort' + command_list[2])
         cURL.perform()
-
+        
+def cloud_pod_ls(url, command):
+    command_list = command.split()
+    if len(command_list) == 3:
+        cURL(cURL.URL, url+'/cloud/pods')
+        cURL.perform()
+        
+def cloud_node_ls(url, command):
+    command_list = command.split()
+    if len(command_list)==4:
+        res_pod_ID = command_list[3]
+        cURL(cURL.URL, url+'/cloud/pods'+command_list[3])
+        cURL.perform()
+        
+def cloud_job_ls(url,command):
+    command_list = command.split()
+    if len(command_list)==4:
+        node_ID=command_list[3]
+        cURL(cURL.URL, url+ '/cloud/jobs/'+command_list[3])
+        cURL.perform()
+        
+def cloud_job_log(url,command):
+    command_list = command.split()
+    if len(command_list)==4:
+        cURL(cURL.URL, url+'/cloud/jobs/'+command_list[3])
+        cURL.perform()
+        
+def cloud_node_log(url,command):
+    command_list = command.split()
+    if len(command_list)==4:
+        cURL(cURL.URL, url+'/cloud/nodes/'+command_list[3])
+        cURL.perform()
+        
 def main():
     rm_url = sys.argv[1]
     while (1):
