@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 import pycurl
 import json
 from io import BytesIO
@@ -7,6 +7,16 @@ cURL = pycurl.Curl()
 proxy_url = 'http://192.168.2.14:6000/'
 
 app = Flask(__name__)
+
+# render page
+@app.route('/', methods=['GET'])
+def render_page():
+    data = BytesIO()
+    cURL.setopt(cURL.URL, proxy_url + 'get_data')
+    cURL.setopt(cURL.WRITEFUNCTION, data.write)
+    cURL.perform()
+    data = json.loads(data.getvalue())
+    return render_template("index.html", data=data)
 
 
 @app.route('/', methods=['GET', 'POST'])
