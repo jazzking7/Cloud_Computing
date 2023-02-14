@@ -9,6 +9,11 @@ nodes = []
 jobs = []
 pods = {}
 
+# render page
+@app.route('/get_data')
+def get_data():
+    return jsonify(nodes)
+
 @app.route('/cloudproxy/nodes/<name>/<pod_name>')
 def cloud_register(name, pod_name):
     if request.method == 'GET':
