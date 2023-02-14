@@ -47,6 +47,9 @@ def cloud_register(name, pod_name):
         node_status = dictionary['node_status']
         new_node_name = dictionary['node_name']
         new_node_pod = dictionary['pod_name']
+        
+        render_page()
+        
         return jsonify({'result': result, 'node_status': node_status, 'new_node_name': new_node_name,
                         'new_node_pod': new_node_pod})
 
