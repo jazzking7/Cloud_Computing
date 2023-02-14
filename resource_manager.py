@@ -4,7 +4,7 @@ import json
 from io import BytesIO
 
 cURL = pycurl.Curl()
-proxy_url = 'http://192.168.2.14:6000/'
+proxy_url = 'http://10.122.56.210:6000/'
 
 app = Flask(__name__)
 
@@ -16,7 +16,9 @@ def render_page():
     cURL.setopt(cURL.WRITEFUNCTION, data.write)
     cURL.perform()
     data = json.loads(data.getvalue())
-    return render_template("index.html", data=data)
+    print(data)
+    length = len(data[0])
+    return render_template("index.html", names = data[0], status = data[1], length = length)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -64,11 +66,10 @@ def cloud_init():
         cURL.perform()
         dictionary = json.loads(data.getvalue())
         print(dictionary)
+        render_page()
 
         result = dictionary['result']
         new_node_pod = 'default'
-        
-        render_page()
         return jsonify({'result': result})
 
 
@@ -84,7 +85,6 @@ def cloud_pod_register(pod_name):
         print(dictionary)
 
         result = dictionary['result']
-        render_page()
         return jsonify({'result': result})
 
 
@@ -101,7 +101,6 @@ def cloud_pod_rm(pod_name):
 
         print(dictionary)
         result = dictionary['result']
-        render_page()
         return jsonify({'result': result})
 
 

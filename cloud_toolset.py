@@ -114,7 +114,18 @@ def main():
             cloud_launch(rm_url, command)
         elif command.startswith("cloud abort"):
             cloud_abort(rm_url, command)
+        elif command.startswith("cloud pod ls"):
+            cloud_pod_ls(rm_url, command)
+        elif command.startswith("cloud node ls"):
+            cloud_node_ls(rm_url, command)
+        elif command.startswith("cloud job ls"):
+            cloud_job_ls(rm_url, command)
+        elif command.startswith("cloud job log"):
+            cloud_job_log(rm_url, command)
+        elif command.startswith("cloud node log"):
+            cloud_node_log(rm_url, command)
 
+        
 
 if __name__ == '__main__':
     main()
