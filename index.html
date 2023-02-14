@@ -1,0 +1,25 @@
+{% block head %}
+<title>Simple Cloud Manager</title>
+{% endblock %}
+
+{% block body %}
+<div class="content">
+    <h1 style="text-align: center">Simple Cloud Manager</h1>
+    <h4 style="text-align: center">Current stats of all nodes</h4>
+    <table>
+        <tr>
+            <th>Node ID</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        {% for node in data %}
+            <tr>
+                <td>{{ node.name }}</td>
+                <td>{{ node.status}}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+
+</div>
+{% endblock %}
