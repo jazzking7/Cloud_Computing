@@ -67,6 +67,8 @@ def cloud_init():
 
         result = dictionary['result']
         new_node_pod = 'default'
+        
+        render_page()
         return jsonify({'result': result})
 
 
@@ -82,6 +84,7 @@ def cloud_pod_register(pod_name):
         print(dictionary)
 
         result = dictionary['result']
+        render_page()
         return jsonify({'result': result})
 
 
@@ -98,6 +101,7 @@ def cloud_pod_rm(pod_name):
 
         print(dictionary)
         result = dictionary['result']
+        render_page()
         return jsonify({'result': result})
 
 
@@ -113,6 +117,7 @@ def cloud_rm(name):
 
         print(dictionary)
         result = dictionary['result']
+        render_page()
         return jsonify({'result': result})
 
 # Launch Jobs
