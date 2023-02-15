@@ -1,9 +1,16 @@
 from flask import Flask, jsonify, request
+import docker
+from threading import Thread, Lock
+
+client = docker.from_env()
+
+lock = Lock()
 
 # job launch
 from datetime import datetime
 import subprocess
 app = Flask(__name__)
+
 
 nodes = []
 jobs = []
@@ -12,7 +19,13 @@ pods = {}
 # render page
 @app.route('/get_data')
 def get_data():
-    return jsonify(nodes)
+    names = []
+    status = []
+    for node in nodes:
+        names.append(node.name)
+        status.append(node.status)
+    return jsonify(names, status)
+
 
 @app.route('/cloudproxy/nodes/<name>/<pod_name>')
 def cloud_register(name, pod_name):
@@ -26,29 +39,56 @@ def cloud_register(name, pod_name):
             return jsonify({'result': result, 'node_status': node_status, 'node_name': name, 'pod_name': 'default'})
         if len(pod_name) == 0:
             for node in pods['default']:
-                if name == node['name']:
-                    print('Node already exists: ' + node['name'] + 'with status' + node['status'])
+                if name == node.name:
+                    print('Node already exists: ' + node.name + 'with status' + node.status)
                     result = 'already_exists'
-                    node_status = node['status']
+                    node_status = node.status
             if result == 'unknown' and node_status == 'unknown':
                 result = 'node_added'
-                pods['default'].append({'name': name, 'status': 'Idle'})
-                # job launch
-                nodes.append({'name': name, 'status': 'Idle', 'log_file': []})
+                ## here thee nodes are added in form of containers
+                ## with no job waiting in the list
+                if len(jobs) == 0:
+                    temp_container = client.containers.create('alpine', detach = True, name = name)
+                    pods['default'].append(temp_container)
+                    nodes.append(temp_container)
+                ## if there are jobs waiting, we create mutex lock
+                ## ATTENTION: i passed the job[0] as the file need to run when i created the new container
+                else:
+                    lock.acquire()
+                    temp_container = client.containers.create('alpine', jobs[0], detach = True, name = name)
+                    pods['default'].append(temp_container)
+                    nodes.append(temp_container)
+                    jobs.pop(0)
+                    lock.release()
+
                 node_status = 'Idle'
                 print('Successfully added a new node: ' + str(name))
             return jsonify({'result': result, 'node_status': node_status, 'node_name': name, 'pod_name': 'default'})
+       ##################
         elif pod_name in pods:
             for node in pods[str(pod_name)]:
-                if name == node['name']:
-                    print('Node already exists: ' + node['name'] + 'with status' + node['status'])
+                if name == node.name:
+                    print('Node already exists: ' + node.name + 'with status' + node.status)
                     result = 'already_exists'
-                    node_status = node['status']
+                    node_status = node.status
             if result == 'unknown' and node_status == 'unknown':
                 result = 'node_added'
-                pods[str(pod_name)].append({'name': name, 'status': 'Idle'})
-                # job launch
-                nodes.append({'name': name, 'status': 'Idle', 'log_file': []})
+                ## here thee nodes are added in form of containers
+                ## with no job waiting in the list
+                if len(jobs) == 0:
+                    temp_container = client.containers.create('alpine', detach = True, name = name)
+                    nodes.append(temp_container)
+                    pods[pod_name].append(temp_container)
+                ## if there are jobs waiting, we create mutex lock
+                ## ATTENTION: i passed the job[0] as the file need to run when i created the new container
+                else:
+                    lock.acquire()
+                    temp_container = client.containers.create('alpine', jobs[0], detach = True, name = name)
+                    pods[pod_name].append(temp_container)
+                    nodes.append(temp_container)
+                    jobs.pop(0)
+                    lock.release()
+
                 node_status = 'Idle'
                 print('Successfully added a new node: ' + str(name))
 
@@ -67,9 +107,12 @@ def cloud_init():
         default_nodes = []
         result = 'unknown'
         for i in range(40):
-            default_nodes.append({'name': ('default' + str(i)), 'status': 'Idle'})
+            temp_container = client.containers.create('alpine', detach = True, name = str('default' + str(i)))
+            print(temp_container.name) ## = str('default' + str(i))
+            print(temp_container.status) ## = 'Idle'
+            default_nodes.append(temp_container)
             # job launch
-            nodes.append({'name': ('default' + str(i)), 'status': 'Idle', 'log_file': []})
+            nodes.append(temp_container)
         pods['default'] = default_nodes
         result = 'initialized'
         ## under condition only one pod
@@ -114,13 +157,14 @@ def cloud_rm(name):
         print('request to remove node: ' + str(name))
         result = 'unknown'
         for node in nodes:
-            if name == node['name']:
+            if name == node.name:
                 if name.startswith('default'):
                     result = 'cannot remove default nodes'
                     return jsonify({'result': result})
                 # correction (resolved)
-                if node['status'] == 'Idle':
+                if node.status == 'created':
                     nodes.remove(node)
+                    node.remove()
                     result = 'node is removed'
                     return jsonify({'result': result})
         result = 'removal failed either name not exists or status not Idle'

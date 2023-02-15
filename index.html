@@ -12,10 +12,10 @@
             <th>Status</th>
             <th>Actions</th>
         </tr>
-        {% for node in data %}
+        {% for i in range(length) %}
             <tr>
-                <td>{{ node.name }}</td>
-                <td>{{ node.status}}</td>
+                <td>{{ names[i] }}</td>
+                <td>{{ status[i] }}</td>
             </tr>
         {% endfor %}
     </table>
