@@ -5,20 +5,19 @@
 {% block body %}
 <div class="content">
     <h1 style="text-align: center">Simple Cloud Manager</h1>
-    <h4 style="text-align: center">Current stats of all nodes</h4>
+    <h4 style="text-align: center">Current state of all nodes</h4>
     <table>
         <tr>
             <th>Node ID</th>
             <th>Status</th>
             <th>Actions</th>
         </tr>
-        {% for i in range(length) %}
+         {% for i in range(length) %}
             <tr>
                 <td>{{ names[i] }}</td>
                 <td>{{ status[i] }}</td>
             </tr>
         {% endfor %}
     </table>
-
 </div>
 {% endblock %}
