@@ -5,17 +5,98 @@
 {% block body %}
 <div class="content">
     <h1 style="text-align: center">Simple Cloud Manager</h1>
-    <h4 style="text-align: center">Current stats of all nodes</h4>
-    <table>
+    <h4 style="text-align: center">Current state of all nodes</h4>
+    <table style="border:1px solid black;margin-left:auto;margin-right:auto;">
         <tr>
             <th>Node ID</th>
             <th>Status</th>
             <th>Actions</th>
         </tr>
-        {% for i in range(length) %}
+         {% for i in range(length) %}
             <tr>
+                
                 <td>{{ names[i] }}</td>
-                <td>{{ status[i] }}</td>
+                
+                {% if status[i] == "created" %}
+                  <td> 
+                      {{ "Idle "}}
+                  </td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </table>
+    
+    <table style="border:1px solid black;margin-left:auto;margin-right:auto;">
+        <tr>
+            <th>Pod Name</th>
+            <th>Number of Nodes</th>
+        </tr>
+         {% for key in pod_ls %}
+            <tr>
+                
+                <td>{{ key }}</td>
+                
+                <td> {{ pod_ls[key] }} </td>
+            </tr>
+        {% endfor %}
+    </table>
+    
+       <table style="border:1px solid black;margin-left:auto;margin-right:auto;">
+        <tr>
+            <th>Node Name</th>
+            <th>Status of Nodes</th>
+        </tr>
+         {% for key in node_ls %}
+            <tr>
+                
+                <td>{{ key }}</td>
+                
+                <td> {{ node_ls[key] }} </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+     <table style="border:1px solid black;margin-left:auto;margin-right:auto;">
+        <tr> 
+            <th> JID </th>
+            <th>Status of job </th>
+        </tr>
+         {% for key in job_ls %}
+            <tr>
+                
+                <td>{{ key }}</td>
+                
+                <td> {{ job_ls[key] }} </td>
+            </tr>
+        {% endfor %}
+    </table>
+     
+     <table style="border:1px solid black;margin-left:auto;margin-right:auto;">
+        <tr>
+            <th>JID</th>
+            <th>log file</th>
+        </tr>
+         {% for key in log_ls %}
+            <tr>
+                
+                <td>{{ key }}</td>
+                
+                <td> {{ log_ls[key] }} </td>
+            </tr>
+        {% endfor %}
+    </table>
+    
+     <table style="border:1px solid black;margin-left:auto;margin-right:auto;">
+        <tr>
+            <th>Node</th>
+            <th>logfile</th>
+        </tr>
+         {% for key in node_log %}
+            <tr>
+                
+                <td>{{ key }}</td>
+                
+                <td> {{ node_log[key] }} </td>
             </tr>
         {% endfor %}
     </table>
