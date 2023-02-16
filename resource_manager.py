@@ -1,12 +1,20 @@
 from flask import Flask, jsonify, request, render_template
+import requests
 import pycurl
 import json
 from io import BytesIO
 
-cURL = pycurl.Curl()
-proxy_url = 'http://10.122.56.210:6000/'
+"""
+cURL = pycurl.Curl() ===> API Caller
+setopt( <Set Attribute>,  <To Value> )
+"""
 
+cURL = pycurl.Curl()
+
+# proxy_url = 'http://192.168.2.14:6000/'
+proxy_url = 'http://0.0.0.0:6000/'
 app = Flask(__name__)
+
 
 # render page
 @app.route('/', methods=['GET'])
@@ -18,8 +26,11 @@ def render_page():
     data = json.loads(data.getvalue())
     print(data)
     length = len(data[0])
-    return render_template("index.html", names = data[0], status = data[1], length = length)
-
+    return render_template("index.html",
+         names=data[0], status=data[1],
+         length=length, pod_ls=data[2],
+         node_ls=data[3], job_ls=data[4],
+         log_ls=data[5], node_log=data[6])
 
 @app.route('/', methods=['GET', 'POST'])
 def cloud():
@@ -49,9 +60,7 @@ def cloud_register(name, pod_name):
         node_status = dictionary['node_status']
         new_node_name = dictionary['node_name']
         new_node_pod = dictionary['pod_name']
-        
-        render_page()
-        
+
         return jsonify({'result': result, 'node_status': node_status, 'new_node_name': new_node_name,
                         'new_node_pod': new_node_pod})
 
@@ -67,7 +76,6 @@ def cloud_init():
         dictionary = json.loads(data.getvalue())
         print(dictionary)
         render_page()
-
         result = dictionary['result']
         new_node_pod = 'default'
         return jsonify({'result': result})
@@ -98,7 +106,7 @@ def cloud_pod_rm(pod_name):
         cURL.setopt(cURL.WRITEFUNCTION, data.write)
         cURL.perform()
         dictionary = json.loads(data.getvalue())
-
+        render_page()
         print(dictionary)
         result = dictionary['result']
         return jsonify({'result': result})
@@ -113,22 +121,23 @@ def cloud_rm(name):
         cURL.setopt(cURL.WRITEFUNCTION, data.write)
         cURL.perform()
         dictionary = json.loads(data.getvalue())
-
         print(dictionary)
-        result = dictionary['result']
         render_page()
+        result = dictionary['result']
         return jsonify({'result': result})
+
 
 # Launch Jobs
 @app.route('/cloud/jobs/launch', methods=["POST"])
 def cloud_launch():
     if request.method == 'POST':
         print("Client is posting a file")
+        # subject to debug
         job_file = request.files["files"]
-        # proxy
-
-        print(job_file.read())
+        ret = requests.post(proxy_url+'cloudproxy/jobs/launch', files=job_file)
+        print("Job launched")
         result = "Success"
+        render_page()
         return jsonify({'result': result})
 
 
@@ -139,38 +148,72 @@ def cloud_abort(JID):
         data = BytesIO()
     return
 
-@app.route('/cloud/pods')
+# CLI commands
+@app.route('/cloud/podsls')
 def cloud_pod_ls():
     if request.method == 'GET':
         print("Cloud is listing its pods")
         data=BytesIO()
-    return
+        cURL.setopt(cURL.URL, proxy_url + 'cloudproxy/podsls')
+        cURL.setopt(cURL.WRITEFUNCTION, data.write)
+        cURL.perform()
+        data = json.loads(data.getvalue())
+        print(data['poddic'])
+        render_page()
+        
+    return jsonify ({'result': 'finished'})
 
-@app.route('/cloud/pods')
+@app.route('/cloud/nodesls/<res_pod_ID>')
+@app.route('/cloud/nodesls/',defaults={'res_pod_ID': str('')})
 def cloud_node_ls(res_pod_ID):
     if request.method == 'GET':
         print('Cloud is listing nodes')
         data=BytesIO()
-    return
-
-@app.route('/cloud/jobs')
+        cURL.setopt(cURL.URL, proxy_url + 'cloudproxy/nodesls/'+str(res_pod_ID))
+        cURL.setopt(cURL.WRITEFUNCTION, data.write)
+        cURL.perform()
+        data = json.loads(data.getvalue())
+        print(data['nodedic'])
+        render_page()
+        
+    return jsonify({'result': 'finished'})
+@app.route('/cloud/jobsls/<node_ID>')
 def cloud_job_ls(node_ID):
     if request.method=='GET':
         print('Cloud is listing jobs')
-        data=ByteIO()
-    return
-@app.route('/cloud/jobs')
+        data = BytesIO()
+        cURL.setopt(cURL.URL, proxy_url + 'cloudproxy/jobsls/<node_ID>')
+        cURL.setopt(cURL.WRITEFUNCTION, data.write)
+        cURL.perform()
+        data = json.loads(data.getvalue())
+        print(data['jobdic'])
+        render_page()
+        
+    return jsonify ({'result': 'finished'})
+@app.route('/cloud/jobslog/<job_ID>')
 def cloud_job_log(job_ID):
     if request.method=='GET':
         print('Cloud is listing log files of the job')
-        data=ByteIO()
-    return
-@app.route('/cloud/nodes')
+        data = BytesIO()
+        cURL.setopt(cURL.URL, proxy_url + 'cloudproxy/jobslog/<job_ID>')
+        cURL.setopt(cURL.WRITEFUNCTION, data.write)
+        cURL.perform()
+        data = json.loads(data.getvalue())
+        print(data['log_file'])
+        render_page()
+    return jsonify ({'result':'finished'})
+@app.route('/cloud/nodelog/<node_ID>')
 def cloud_log_node(node_ID):
     if request.method=='GET':
         print('Cloud is listing the log file of the node')
-        data=ByteIO()
-    return
+        data = BytesIO()
+        cURL.setopt(cURL.URL, proxy_url + 'cloudproxy/nodelog/<node_ID>')
+        cURL.setopt(cURL.WRITEFUNCTION, data.write)
+        cURL.perform()
+        data = json.loads(data.getvalue())
+        print(data['nodeslog'])
+        render_page()
+    return jsonify ({'result': 'finished'})
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5050)

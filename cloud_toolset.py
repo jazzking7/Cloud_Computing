@@ -48,47 +48,58 @@ def cloud_launch(url, command):
     if len(command_list) == 3:
         file_path = command_list[2]
         if os.path.isfile(file_path):
-            files = {'Files': open(file_path, 'rb')}
+            files = {'files': open(file_path, 'rb')}
             ret = requests.post(url+'/cloud/jobs/launch', files=files)
             print(ret.text)
+        print("Not a valid file path!")
 
 def cloud_abort(url, command):
     command_list = command.split()
     if len(command_list) == 3:
         JID = command_list[2]
-        cURL.setopt(cURL.URL, url + '/cloud/jobs/abort' + command_list[2])
+        cURL.setopt(cURL.URL, url + '/cloud/jobs/abort/' + command_list[2])
         cURL.perform()
-        
+
+# CLI commands
+# checking
 def cloud_pod_ls(url, command):
     command_list = command.split()
     if len(command_list) == 3:
-        cURL(cURL.URL, url+'/cloud/pods')
+        cURL.setopt(cURL.URL, url + '/cloud/podsls')
         cURL.perform()
-        
+
+
 def cloud_node_ls(url, command):
     command_list = command.split()
-    if len(command_list)==4:
-        res_pod_ID = command_list[3]
-        cURL(cURL.URL, url+'/cloud/pods'+command_list[3])
+    if len(command_list) == 4:
+        cURL.setopt(cURL.URL, url + '/cloud/nodesls/' + command_list[3])
         cURL.perform()
-        
-def cloud_job_ls(url,command):
+    elif len(command_list)==3:
+        cURL.setopt(cURL.URL, url + '/cloud/nodesls/<res_pod_ID>')
+        cURL.perform()
+
+def cloud_job_ls(url, command):
     command_list = command.split()
-    if len(command_list)==4:
+    if len(command_list) == 4:
+        node_ID = command_list[3]
+        cURL.setopt(cURL.URL, url + '/cloud/jobsls/' + command_list[3])
+        cURL.perform()
+    elif len(command_list)==3:
+        cURL.setopt(cURL.URL, url + '/cloud/jobsls/<node_ID>')
+        cURL.perform()        
+
+def cloud_job_log(url, command):
+    command_list = command.split()
+    if len(command_list) == 4:
+        job_ID=command_list[3]
+        cURL.setopt(cURL.URL, url + '/cloud/jobslog/' + command_list[3])
+        cURL.perform()   
+
+def cloud_node_log(url, command):
+    command_list = command.split()
+    if len(command_list) == 4:
         node_ID=command_list[3]
-        cURL(cURL.URL, url+ '/cloud/jobs/'+command_list[3])
-        cURL.perform()
-        
-def cloud_job_log(url,command):
-    command_list = command.split()
-    if len(command_list)==4:
-        cURL(cURL.URL, url+'/cloud/jobs/'+command_list[3])
-        cURL.perform()
-        
-def cloud_node_log(url,command):
-    command_list = command.split()
-    if len(command_list)==4:
-        cURL(cURL.URL, url+'/cloud/nodes/'+command_list[3])
+        cURL.setopt(cURL.URL, url + '/cloud/nodelog/' + command_list[3])
         cURL.perform()
         
 def main():
@@ -114,6 +125,17 @@ def main():
             cloud_launch(rm_url, command)
         elif command.startswith("cloud abort"):
             cloud_abort(rm_url, command)
+        # CLI commands
+        elif command.startswith("cloud pod ls"):
+            cloud_pod_ls(rm_url, command)
+        elif command.startswith("cloud node ls"):
+            cloud_node_ls(rm_url, command)
+        elif command.startswith("cloud job ls"):
+            cloud_job_ls(rm_url, command)
+        elif command.startswith("cloud job log"):
+            cloud_job_log(rm_url, command)
+        elif command.startswith("cloud node log"):
+            cloud_node_log(rm_url, command)
 
 
 if __name__ == '__main__':
